@@ -2,11 +2,11 @@ name: CI
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
+  # Triggers the workflow on push or pull request events but only for the specified branches
   push:
-    branches: [ "main", "jax_reorganize" ]
+    branches: [ "main", "remove-conda" ]
   pull_request:
-    branches: [ "main", "jax_reorganize" ]
+    branches: [ "main", "remove-conda" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -26,12 +26,6 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
-
-      - name: setup-micromamba
-        uses: mamba-org/setup-micromamba@v1.9.0
-        with:
-          environment-file: jax_env.yml
-          cache-environment: true
 
       - name: Lint with flake8
         run: |
