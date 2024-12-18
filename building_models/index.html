@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Building models - JaxKineticModel documentation</title>
+    <title>Building models - jaxkineticmodel documentation</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -30,7 +30,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
-          <a href=".." class="icon icon-home"> JaxKineticModel documentation
+          <a href=".." class="icon icon-home"> jaxkineticmodel documentation
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -72,6 +72,8 @@
     </li>
         </ul>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#building-custom-models">Building custom models</a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#saving-models">Saving models</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#references">References</a>
@@ -80,7 +82,7 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../SBML/">SBML models</a>
+                <li class="toctree-l1"><a class="reference internal" href="../SBML/">Loading SBML models</a>
                 </li>
               </ul>
               <ul>
@@ -92,7 +94,7 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../glycolysis/">Glycolysis</a>
+                <li class="toctree-l1"><a class="reference internal" href="../glycolysis/">Custom models</a>
                 </li>
               </ul>
       </div>
@@ -102,7 +104,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">JaxKineticModel documentation</a>
+          <a href="..">jaxkineticmodel documentation</a>
         
       </nav>
       <div class="wy-nav-content">
@@ -120,21 +122,22 @@
               
                 <h1 id="building-models">Building models</h1>
 <h2 id="metabolic-kinetic-modelling">Metabolic kinetic modelling</h2>
-<p>The time evolution of metabolic states are often described by a set of Ordinary Differential Equations (ODEs)
+<p>The time evolution of metabolic states are often described by a set of 
+Ordinary Differential Equations (ODEs):
 $$\frac{dm(t)}{dt}=S\cdot v(t,m(t),\theta)$$</p>
-<p>\(S\) is the stoichiometric matrix that describes the mass balances of a metabolic system. The fluxes \(v\) are described by reaction mechanisms, typically of some form like Michaelis-Menten or Hill equations. These mechanisms are parameterized by \(\theta\). By providing the initial values of the metabolic states, the ODEs can be solved using a numerical solver
+<p>\(S\) is the stoichiometric matrix that describes the mass balances of 
+a metabolic system. The fluxes \(v\) are described by reaction mechanisms, typically of some form like Michaelis-Menten or Hill equations. These mechanisms are parameterized by \(\theta\). By providing the initial values of the metabolic states, the ODEs can be solved using a numerical solver:
 $$m(T)=m(0)+\int_0^T S\cdot v(t,m(t),\theta)dt$$</p>
 <p>We will describe below how you can build your own models that are compatible with Jax/Diffrax <strong>[1]</strong>. </p>
 <h2 id="the-reaction-object">The <code>Reaction</code> object</h2>
 <h5 id="a-reaction-centric-approach">A reaction-centric approach</h5>
-<p>Models can be built in a reaction-centric manner. The <code>Reaction</code> object requires setting five inputs: name of the reaction, stoichiometry of the reaction, compartments of the species involved, and it's mechanism. </p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">source.kinetic_mechanisms</span> <span class="kn">import</span> <span class="n">JaxKineticMechanisms</span> <span class="k">as</span> <span class="n">jm</span>
-<span class="kn">from</span> <span class="nn">source.building_models</span> <span class="kn">import</span> <span class="n">JaxKineticModelBuild</span> <span class="k">as</span> <span class="n">jkm</span>
+<p>Models can be built in a reaction-centric manner. Initializing a <code>Reaction</code> object requires five inputs: name of the reaction, names of the species involved, stoichiometry of the reaction, compartments of the species involved, and the reaction's mechanism. </p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">jaxkineticmodel.kinetic_mechanisms</span> <span class="kn">import</span> <span class="n">JaxKineticMechanisms</span> <span class="k">as</span> <span class="n">jm</span>
+<span class="kn">from</span> <span class="nn">jaxkineticmodel.building_models</span> <span class="kn">import</span> <span class="n">JaxKineticModelBuild</span> <span class="k">as</span> <span class="n">jkm</span>
 
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">diffrax</span> 
+
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
@@ -261,8 +264,7 @@ $$m(T)=m(0)+\int_0^T S\cdot v(t,m(t),\theta)dt$$</p>
 <p>Here, we show an example of how to build kinetic models using the reaction objects described above. We model the following network:</p>
 <p><img alt="simplenetwork" src="../images/s1_simple_network.png" /></p>
 <p>Three metabolic fluxes need to be modelled</p>
-<div class="codehilite"><pre><span></span><code><span class="c1">#Add reactions v1 to v3</span>
-<span class="n">v1</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">Reaction</span><span class="p">(</span>
+<div class="codehilite"><pre><span></span><code><span class="n">v1</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">Reaction</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;v1&quot;</span><span class="p">,</span>
     <span class="n">species</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;m1&#39;</span><span class="p">,</span><span class="s1">&#39;m2&#39;</span><span class="p">],</span>
     <span class="n">stoichiometry</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
@@ -291,9 +293,9 @@ $$m(T)=m(0)+\int_0^T S\cdot v(t,m(t),\theta)dt$$</p>
 <span class="n">compartment_values</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
 
 
-<span class="c1"># initialized the kinetic model object, and then make it a simulation object through jkm.NeuralODE</span>
+<span class="c1"># initialize the kinetic model object, and then make it a simulation object through jkm.NeuralODE</span>
 <span class="n">kmodel</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">JaxKineticModel_Build</span><span class="p">(</span><span class="n">reactions</span><span class="p">,</span><span class="n">compartment_values</span><span class="p">)</span>
-<span class="n">kmodel_sim</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">NeuralODE</span><span class="p">(</span><span class="n">kmodel</span><span class="p">)</span>
+<span class="n">kmodel_sim</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">NeuralODEBuild</span><span class="p">(</span><span class="n">kmodel</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">stoichiometric_matrix</span><span class="p">)</span>
 </code></pre></div>
 
@@ -306,9 +308,7 @@ m4  0.0  0.0  1.0
 </code></pre></div>
 
 <p>One can first jax.jit the model <strong>[2]</strong> and solve the ODEs using the diffrax package <strong>[1]</strong>, which contains many nice numerical solvers.</p>
-<div class="codehilite"><pre><span></span><code><span class="c1">#define the time interval, and the initial conditions</span>
-
-<span class="n">ts</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">1000</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="n">ts</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">1000</span><span class="p">)</span>
 <span class="n">y0</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
 <span class="n">params</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">,</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mf">1.5</span><span class="p">,</span><span class="mi">1</span><span class="p">])))</span>
 
@@ -325,21 +325,22 @@ m4  0.0  0.0  1.0
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time (in seconds)&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Concentration (in mM)&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </code></pre></div>
 
 <p><img alt="timeseries" src="../images/timeseries_example.png" /></p>
+<p><span style="font-size: 0.8em;"><b>Figure 1:</b> ODE simulation.</span></p>
 <h4 id="on-jit-compiling-kinetic-models">On jit-compiling kinetic models</h4>
 <p>When you simulated a jit-compiled kinetic model for a certain time-range (e.g., <code>jnp.linspace(0,10,1000)</code> and you want to elongate this, it is best to not change the number of timepoints (e.g, <code>jnp.linspace(0,1000,1000)</code>. Otherwise, the kinetic models needs to be recompiled.  </p>
 <h2 id="boundary-conditions">Boundary conditions</h2>
 <p>Boundary conditions can be either constant or not constant. Both are implemented as a <code>BoundaryCondition</code> class</p>
 <h4 id="constant-boundary-conditions">Constant boundary conditions</h4>
 <p>Suppose for the system above, we want to make metabolite \(m_1\) a constant boundary condition. We can redefine the species by replacing it with a value</p>
-<div class="codehilite"><pre><span></span><code><span class="n">kmodel</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">JaxKineticModel_Build</span><span class="p">(</span><span class="n">reactions</span><span class="p">,</span><span class="n">compartment_values</span><span class="p">)</span>
-<span class="n">kmodel</span><span class="o">.</span><span class="n">add_boundary</span><span class="p">(</span><span class="s1">&#39;m1&#39;</span><span class="p">,</span><span class="n">jkm</span><span class="o">.</span><span class="n">BoundaryCondition</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+<div class="codehilite"><pre><span></span><code><span class="n">kmodel</span><span class="o">.</span><span class="n">add_boundary</span><span class="p">(</span><span class="s1">&#39;m1&#39;</span><span class="p">,</span><span class="n">jkm</span><span class="o">.</span><span class="n">BoundaryCondition</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="n">constant</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">stoichiometric_matrix</span><span class="p">)</span>
 
 <span class="c1">#recompile and simulate</span>
-<span class="n">kmodel_sim</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">NeuralODE</span><span class="p">(</span><span class="n">kmodel</span><span class="p">)</span>
+<span class="n">kmodel_sim</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">NeuralODEBuild</span><span class="p">(</span><span class="n">kmodel</span><span class="p">)</span>
 <span class="n">ts</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">1000</span><span class="p">)</span>
 
 <span class="c1">#we remove m1 from y0, as this is now not evaluated by solving</span>
@@ -359,17 +360,18 @@ m4  0.0  0.0  1.0
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time (in seconds)&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Concentration (in mM)&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </code></pre></div>
 
 <p><img alt="timeseries" src="../images/timeseries_example_boundary.png" /></p>
+<p><span style="font-size: 0.8em;"><b>Figure 2:</b> ODE simulation with \(m1=constant\).</span></p>
 <h4 id="non-constant-boundary-conditions">Non-constant boundary conditions</h4>
 <p>For non-constant boundary conditions, you can use the <code>BoundaryCondition</code> class as before. You can use for example the interpolation abstract classes from <a href="https://docs.kidger.site/diffrax/api/interpolation/">Diffrax</a>. For analytic expression dependent on time t, these can be done as follows:</p>
-<div class="codehilite"><pre><span></span><code><span class="c1"># initialized the kinetic model object, and then make it a simulation object through jkm.NeuralODE</span>
-<span class="n">kmodel</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">JaxKineticModel_Build</span><span class="p">(</span><span class="n">reactions</span><span class="p">,</span><span class="n">compartment_values</span><span class="p">)</span>
-<span class="n">kmodel</span><span class="o">.</span><span class="n">add_boundary</span><span class="p">(</span><span class="s1">&#39;m1&#39;</span><span class="p">,</span><span class="n">jkm</span><span class="o">.</span><span class="n">BoundaryCondition</span><span class="p">(</span><span class="s1">&#39;0.1*sin(t)&#39;</span><span class="p">))</span>
+<div class="codehilite"><pre><span></span><code><span class="n">kmodel</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">JaxKineticModel_Build</span><span class="p">(</span><span class="n">reactions</span><span class="p">,</span><span class="n">compartment_values</span><span class="p">)</span>
+<span class="n">kmodel</span><span class="o">.</span><span class="n">add_boundary</span><span class="p">(</span><span class="s1">&#39;m1&#39;</span><span class="p">,</span><span class="n">jkm</span><span class="o">.</span><span class="n">BoundaryCondition</span><span class="p">(</span><span class="s1">&#39;0.5+0.3*sin(t)&#39;</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">stoichiometric_matrix</span><span class="p">)</span>
 
-<span class="n">kmodel_sim</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">NeuralODE</span><span class="p">(</span><span class="n">kmodel</span><span class="p">)</span>
+<span class="n">kmodel_sim</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">NeuralODEBuild</span><span class="p">(</span><span class="n">kmodel</span><span class="p">)</span>
 <span class="n">ts</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">1000</span><span class="p">)</span>
 
 <span class="c1">#we remove m1 from y0, as this is now not evaluated by solving</span>
@@ -388,11 +390,15 @@ m4  0.0  0.0  1.0
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time (in seconds)&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Concentration (in mM)&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </code></pre></div>
 
 <p><img alt="timeseries" src="../images/timeseries_example_boundary_sin.png" /></p>
+<p><span style="font-size: 0.8em;"><b>Figure 3:</b> ODE simulation with \(m1=0+5+0.3*sin(t)\).</span></p>
+<h2 id="building-custom-models">Building custom models</h2>
+<p>When building kinetic models, it is not uncommon that \(\frac{dm(t)}{dt}\) is not fully based on the evaluation of \(S\cdot v(t)\). For these cases, one can still use the kinetic mechanisms described above but with a manual setup of the ODEs. We have provided a custom implementation of glycolysis in <a href="../glycolysis/">Custom models</a> as an example.</p>
 <h2 id="saving-models">Saving models</h2>
-<p>To do (or remove)</p>
+<p>Coming up</p>
 <h2 id="references">References</h2>
 <p>[1] Kidger, P. (2022). On neural differential equations. arXiv preprint arXiv:2202.02435.</p>
 <p>[2] Bradbury, J., Frostig, R., Hawkins, P., Johnson, M. J., Leary, C., Maclaurin, D., ... &amp; Zhang, Q. (2018). JAX: composable transformations of Python+ NumPy programs.</p>
@@ -401,7 +407,7 @@ m4  0.0  0.0  1.0
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href=".." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../SBML/" class="btn btn-neutral float-right" title="SBML models">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../SBML/" class="btn btn-neutral float-right" title="Loading SBML models">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
