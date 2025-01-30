@@ -130,6 +130,8 @@
                                                <span class="n">lower_bound</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
                                                <span class="n">upper_bound</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
                                                <span class="n">N</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="n">optimized_parameters</span><span class="p">,</span><span class="n">loss_per_iteration</span><span class="p">,</span><span class="n">global_norms</span><span class="o">=</span><span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
 </code></pre></div>
 
 <p>To initiate training, you simply call the function <code>Trainer.train()</code></p>
@@ -166,6 +168,7 @@ one can continue the optimization by re-running the <code>trainer</code> object 
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Log Loss&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_yscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="c1"># fig.savefig(&quot;docs/docs/images/loss_per_iter_extended.png&quot;,bbox_inches=&quot;tight&quot;)</span>
 </code></pre></div>
 
 <p><img alt="loss_extended" src="../images/loss_per_iter_extended.png" /></p>

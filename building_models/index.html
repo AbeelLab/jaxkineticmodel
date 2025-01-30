@@ -336,7 +336,7 @@ m4  0.0  0.0  1.0
 <p>Boundary conditions can be either constant or not constant. Both are implemented as a <code>BoundaryCondition</code> class</p>
 <h4 id="constant-boundary-conditions">Constant boundary conditions</h4>
 <p>Suppose for the system above, we want to make metabolite \(m_1\) a constant boundary condition. We can redefine the species by replacing it with a value</p>
-<div class="codehilite"><pre><span></span><code><span class="n">kmodel</span><span class="o">.</span><span class="n">add_boundary</span><span class="p">(</span><span class="s1">&#39;m1&#39;</span><span class="p">,</span><span class="n">jkm</span><span class="o">.</span><span class="n">BoundaryCondition</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="n">constant</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<div class="codehilite"><pre><span></span><code><span class="n">kmodel</span><span class="o">.</span><span class="n">add_boundary</span><span class="p">(</span><span class="s1">&#39;m1&#39;</span><span class="p">,</span><span class="n">jkm</span><span class="o">.</span><span class="n">BoundaryCondition</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">stoichiometric_matrix</span><span class="p">)</span>
 
 <span class="c1">#recompile and simulate</span>

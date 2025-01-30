@@ -109,15 +109,11 @@
 
 <span class="n">ts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">2000</span><span class="p">)</span>
 
-<span class="c1"># parameters in sbml can be either global or local parameters.</span>
-<span class="c1"># For gradient descent purposes we want all of them global.</span>
-<span class="n">params</span> <span class="o">=</span> <span class="n">get_global_parameters</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-<span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">model</span><span class="o">.</span><span class="n">local_params</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">}</span>
 
 <span class="c1">#simulate given the initial conditions defined in the sbml</span>
 <span class="n">ys</span> <span class="o">=</span> <span class="n">JaxKmodel</span><span class="p">(</span><span class="n">ts</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span>
             <span class="n">y0</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">y0</span><span class="p">,</span>
-            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
 <span class="n">ys</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="n">S</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 </code></pre></div>
 

@@ -16,7 +16,6 @@ dataset=pd.read_csv("../../datasets/Smallbone2013 - Serine biosynthesis/Smallbon
 #initialize the trainer object. The required inputs are model and data. We will do 300 iterations of gradient descent
 trainer=Trainer(model=model,data=dataset,n_iter=300)
 
-
 base_parameters=dict(zip(trainer.parameters,np.ones(len(trainer.parameters))))
 parameter_sets=trainer.latinhypercube_sampling(base_parameters,
                                                lower_bound=1/10,

@@ -73,7 +73,7 @@ ax.legend()
 plt.show()
 
 kmodel=jkm.JaxKineticModel_Build(reactions,compartment_values)
-kmodel.add_boundary('m1',jkm.BoundaryCondition("2", constant=True))
+kmodel.add_boundary('m1',jkm.BoundaryCondition('2'))
 print(kmodel.stoichiometric_matrix)
 
 #recompile and simulate

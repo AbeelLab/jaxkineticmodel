@@ -10,13 +10,9 @@ JaxKmodel = model.get_kinetic_model()
 
 ts = jnp.linspace(0,100,2000)
 
-# parameters in sbml can be either global or local parameters.
-# For gradient descent purposes we want all of them global.
-params = get_global_parameters(model.model)
-params = {**model.local_params, **params}
 
 #simulate given the initial conditions defined in the sbml
 ys = JaxKmodel(ts=ts,
             y0=model.y0,
-            params=params)
+            params=model.parameters)
 ys=pd.DataFrame(ys,columns=S.index)
