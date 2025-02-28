@@ -44,7 +44,7 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../building_models/">Building models</a>
+                <li class="toctree-l1"><a class="reference internal" href="../building_models/">Building and simulating models</a>
                 </li>
               </ul>
               <ul class="current">
@@ -52,7 +52,7 @@
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#sbml-loader-and-simulation">SBML loader and simulation</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#percentage-of-similar-models">Percentage of similar models</a>
+    <li class="toctree-l2"><a class="reference internal" href="#sbml-test-suite-passed-tests">SBML test-suite passed tests</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#references">References</a>
     </li>
@@ -97,14 +97,20 @@
                 <h1 id="loading-sbml-models">Loading SBML models</h1>
 <h2 id="sbml-loader-and-simulation">SBML loader and simulation</h2>
 <p>SBML models can be loaded and simulated as follows. </p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">jaxkineticmodel.load_sbml.sbml_load</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">jaxkineticmodel.load_sbml.sbml_model</span> <span class="kn">import</span> <span class="n">SBMLModel</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">jaxkineticmodel.load_sbml.sbml_model</span> <span class="kn">import</span> <span class="n">SBMLModel</span>
+<span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
-<span class="n">filepath</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;../../models/sbml_models/working_models/simple_sbml.xml&quot;</span><span class="p">)</span>
+
+<span class="n">filepath</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;models/sbml_models/working_models/simple_sbml.xml&quot;</span><span class="p">)</span>
 
 <span class="c1"># load model from file_path</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">SBMLModel</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+
+<span class="c1">#replaces assignment rules, boundary conditions, etc..</span>
+
 <span class="n">S</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">_get_stoichiometric_matrix</span><span class="p">()</span>
+
 <span class="n">JaxKmodel</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_kinetic_model</span><span class="p">()</span>
 
 <span class="n">ts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">2000</span><span class="p">)</span>
@@ -117,38 +123,134 @@
 <span class="n">ys</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="n">S</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 </code></pre></div>
 
-<h2 id="percentage-of-similar-models">Percentage of similar models</h2>
-<p>Status report on a large collection of SBML models loaded from <a href="https://www.ebi.ac.uk/biomodels/">biomodels</a> and from a benchmark collection <strong>[1]</strong>. Discrepancies are models where we compared the output from JaxKineticModel to a simulation using tellurium <strong>[2]</strong>, a popular tool in systems biology. Discrepancies could be there because of numerical differences in the results, or potentially a missing feature in our current implementation (certain event rules are not implemented yet.)</p>
+<h2 id="sbml-test-suite-passed-tests">SBML test-suite passed tests</h2>
+<p>While <code>jaxkineticmodel</code> is compatible with SBML, not all .xml files are compatible/possible to simulate. This depends on the 
+SBML model level and version that it was written. We here report a comparison in number of passed models with a comparison
+to libroadrunner using the <a href="https://github.com/sbmlteam/sbml-test-suite/tree/release">sbml-test-suite</a>. 
+Libroadrunner is a high-performance simulation engine for systems biology. We compare the simulations to the gold-standard
+dataset that is provided in the sbml-test-suite. We selected 500 models from the test-suite and filtered out steady state models.</p>
+<p>Discrepancies are models where we compared the output from JaxKineticModel to the ground-truth data and observed
+differnces between the time-series. Overall,
+libroadrunner simulates more than jaxkineticmodel due to some event rules not yet being implemented. In the future 
+we hope to address all these edge-cases.</p>
 <table>
 <thead>
 <tr>
-<th><strong>Category</strong></th>
-<th><strong>Number of working models</strong></th>
+<th>Test Name</th>
+<th>Similar Simulation</th>
+<th>Failed Simulation</th>
+<th>Discrepancies</th>
+<th>Total</th>
+<th>Last run</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Models working</td>
-<td>31</td>
+<td>jaxkineticmodel (l2v1)</td>
+<td>169</td>
+<td>68</td>
+<td>52</td>
+<td>289</td>
+<td>15-02-25</td>
 </tr>
 <tr>
-<td>Failing models</td>
-<td>2</td>
+<td>libroadrunner (l2v1)</td>
+<td>185</td>
+<td>62</td>
+<td>42</td>
+<td>289</td>
+<td>15-02-25</td>
 </tr>
 <tr>
-<td>Discrepancies</td>
-<td>5</td>
+<td>jaxkineticmodel (l2v2)</td>
+<td>188</td>
+<td>99</td>
+<td>56</td>
+<td>343</td>
+<td>12-02-25</td>
+</tr>
+<tr>
+<td>libroadrunner (l2v2)</td>
+<td>219</td>
+<td>68</td>
+<td>56</td>
+<td>343</td>
+<td>12-02-25</td>
+</tr>
+<tr>
+<td>jaxkineticmodel (l2v3)</td>
+<td>189</td>
+<td>98</td>
+<td>56</td>
+<td>343</td>
+<td>12-02-25</td>
+</tr>
+<tr>
+<td>libroadrunner (l2v3)</td>
+<td>220</td>
+<td>68</td>
+<td>55</td>
+<td>343</td>
+<td>12-02-25</td>
+</tr>
+<tr>
+<td>jaxkineticmodel (l2v4)</td>
+<td>191</td>
+<td>103</td>
+<td>56</td>
+<td>133</td>
+<td>12-02-25</td>
+</tr>
+<tr>
+<td>libroadrunner (l2v4)</td>
+<td>219</td>
+<td>73</td>
+<td>58</td>
+<td>133</td>
+<td>12-02-25</td>
+</tr>
+<tr>
+<td>jaxkineticmodel (l3v1)</td>
+<td>173</td>
+<td>206</td>
+<td>62</td>
+<td>441</td>
+<td>12-02-25</td>
+</tr>
+<tr>
+<td>libroadrunner (l3v1)</td>
+<td>197</td>
+<td>141</td>
+<td>103</td>
+<td>441</td>
+<td>12-02-25</td>
+</tr>
+<tr>
+<td>jaxkineticmodel (l3v2)</td>
+<td>171</td>
+<td>230</td>
+<td>59</td>
+<td>460</td>
+<td>12-02-25</td>
+</tr>
+<tr>
+<td>libroadrunner (l3v2)</td>
+<td>197</td>
+<td>160</td>
+<td>103</td>
+<td>460</td>
+<td>12-02-25</td>
 </tr>
 </tbody>
 </table>
 <h2 id="references">References</h2>
 <p>[1] Hass, H., Loos, C., Raimundez-Alvarez, E., Timmer, J., Hasenauer, J., &amp; Kreutz, C. (2019). Benchmark problems for dynamic modeling of intracellular processes. Bioinformatics, 35(17), 3073-3082.</p>
-<p>[2] Choi, K., Medley, J. K., König, M., Stocking, K., Smith, L., Gu, S., &amp; Sauro, H. M. (2018). Tellurium: an extensible python-based modeling environment for systems and synthetic biology. Biosystems, 171, 74-79.</p>
+<p>[2]Somogyi, E. T., Bouteiller, J. M., Glazier, J. A., König, M., Medley, J. K., Swat, M. H., &amp; Sauro, H. M. (2015). libRoadRunner: a high performance SBML simulation and analysis library. Bioinformatics, 31(20), 3315-3321.</p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../building_models/" class="btn btn-neutral float-left" title="Building models"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../building_models/" class="btn btn-neutral float-left" title="Building and simulating models"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../training_models/" class="btn btn-neutral float-right" title="Training models">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 

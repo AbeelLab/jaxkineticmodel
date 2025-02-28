@@ -1,5 +1,5 @@
-from jaxkineticmodel.load_sbml.sbml_load import *
-from jaxkineticmodel.load_sbml.sbml_model import SBMLModel
+
+from jaxkineticmodel.load_sbml.sbml_model import SBMLModel, get_global_parameters
 import jax.numpy as jnp
 from jaxkineticmodel.utils import get_logger
 logger = get_logger(__name__)
@@ -7,18 +7,17 @@ from jaxkineticmodel.simulated_dbtl.dbtl import DesignBuildTestLearnCycle
 
 
 # load model (Messiha et. al (2013))
-filepath = ("../../models/sbml_models/working_models/Messiha2013.xml")
+filepath = ("models/sbml_models/working_models/Messiha2013.xml")
 
 model = SBMLModel(filepath)
 # we retrieve parameters from the model
-global_params = get_global_parameters(model.model)
-params = {**model.local_params, **global_params}
+
 
 # timespan of model
 ts = jnp.linspace(0, 6000, 100)
 
 dbtl_cycle = DesignBuildTestLearnCycle(model=model,
-                                       parameters=params,
+                                       parameters=model.parameters,
                                        initial_conditions=model.y0,
                                        timespan=ts,
                                        target=['PEP'])

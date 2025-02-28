@@ -5,14 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Building models - jaxkineticmodel documentation</title>
+    <title>Building and simulating models - jaxkineticmodel documentation</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Building models";
+        var mkdocs_page_name = "Building and simulating models";
         var mkdocs_page_input_path = "building_models.md";
         var mkdocs_page_url = null;
       </script>
@@ -44,7 +44,7 @@
                 </li>
               </ul>
               <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="#">Building models</a>
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Building and simulating models</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#metabolic-kinetic-modelling">Metabolic kinetic modelling</a>
     </li>
@@ -71,6 +71,8 @@
     <li class="toctree-l3"><a class="reference internal" href="#non-constant-boundary-conditions">Non-constant boundary conditions</a>
     </li>
         </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#changing-the-numerical-solver">Changing the numerical solver</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#building-custom-models">Building custom models</a>
     </li>
@@ -111,7 +113,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Building models</li>
+      <li class="breadcrumb-item active">Building and simulating models</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -132,23 +134,23 @@ $$m(T)=m(0)+\int_0^T S\cdot v(t,m(t),\theta)dt$$</p>
 <h2 id="the-reaction-object">The <code>Reaction</code> object</h2>
 <h5 id="a-reaction-centric-approach">A reaction-centric approach</h5>
 <p>Models can be built in a reaction-centric manner. Initializing a <code>Reaction</code> object requires five inputs: name of the reaction, names of the species involved, stoichiometry of the reaction, compartments of the species involved, and the reaction's mechanism. </p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">jaxkineticmodel.kinetic_mechanisms</span> <span class="kn">import</span> <span class="n">JaxKineticMechanisms</span> <span class="k">as</span> <span class="n">jm</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">#import</span>
+<span class="kn">import</span> <span class="nn">diffrax</span>
+<span class="kn">from</span> <span class="nn">jaxkineticmodel.kinetic_mechanisms</span> <span class="kn">import</span> <span class="n">JaxKineticMechanisms</span> <span class="k">as</span> <span class="n">jm</span>
 <span class="kn">from</span> <span class="nn">jaxkineticmodel.building_models</span> <span class="kn">import</span> <span class="n">JaxKineticModelBuild</span> <span class="k">as</span> <span class="n">jkm</span>
-
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">import</span> <span class="nn">jax</span>
-
+<span class="kn">import</span> <span class="nn">equinox</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
-
-<span class="n">ReactionA</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">Reaction</span><span class="p">(</span>
+<span class="n">ReactionA</span> <span class="o">=</span> <span class="n">jkm</span><span class="o">.</span><span class="n">Reaction</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ReactionA&quot;</span><span class="p">,</span>
-    <span class="n">species</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">,</span><span class="s1">&#39;B&#39;</span><span class="p">],</span>
-    <span class="n">stoichiometry</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
-    <span class="n">compartments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">,</span><span class="s1">&#39;c&#39;</span><span class="p">],</span>
-    <span class="n">mechanism</span><span class="o">=</span><span class="n">jm</span><span class="o">.</span><span class="n">Jax_MM_Irrev_Uni</span><span class="p">(</span><span class="n">substrate</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span><span class="n">vmax</span><span class="o">=</span><span class="s2">&quot;A_Vmax&quot;</span><span class="p">,</span><span class="n">km_substrate</span><span class="o">=</span><span class="s2">&quot;A_Km&quot;</span><span class="p">),</span>
-    <span class="p">)</span>
+    <span class="n">species</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">],</span>
+    <span class="n">stoichiometry</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="n">compartments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">],</span>
+    <span class="n">mechanism</span><span class="o">=</span><span class="n">jm</span><span class="o">.</span><span class="n">Jax_MM_Irrev_Uni</span><span class="p">(</span><span class="n">substrate</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="s2">&quot;A_Vmax&quot;</span><span class="p">,</span> <span class="n">km_substrate</span><span class="o">=</span><span class="s2">&quot;A_Km&quot;</span><span class="p">),</span>
+<span class="p">)</span>
 </code></pre></div>
 
 <p>The <code>mechanism</code> is another class that describes the flux function, which depends on metabolite states and parameters. Parameters are pointed towards with unique symbols. The reaction object is implemented in a way that own-implemented flux functions can be used. We have also implemented a set of general flux functions that are often used in systems biology. </p>
@@ -264,39 +266,40 @@ $$m(T)=m(0)+\int_0^T S\cdot v(t,m(t),\theta)dt$$</p>
 <p>Here, we show an example of how to build kinetic models using the reaction objects described above. We model the following network:</p>
 <p><img alt="simplenetwork" src="../images/s1_simple_network.png" /></p>
 <p>Three metabolic fluxes need to be modelled</p>
-<div class="codehilite"><pre><span></span><code><span class="n">v1</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">Reaction</span><span class="p">(</span>
+<div class="codehilite"><pre><span></span><code><span class="c1">#Add reactions v1 to v3</span>
+<span class="n">v1</span> <span class="o">=</span> <span class="n">jkm</span><span class="o">.</span><span class="n">Reaction</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;v1&quot;</span><span class="p">,</span>
-    <span class="n">species</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;m1&#39;</span><span class="p">,</span><span class="s1">&#39;m2&#39;</span><span class="p">],</span>
-    <span class="n">stoichiometry</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
-    <span class="n">compartments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">,</span><span class="s1">&#39;c&#39;</span><span class="p">],</span>
-    <span class="n">mechanism</span><span class="o">=</span><span class="n">jm</span><span class="o">.</span><span class="n">Jax_MM_Irrev_Uni</span><span class="p">(</span><span class="n">substrate</span><span class="o">=</span><span class="s2">&quot;m1&quot;</span><span class="p">,</span><span class="n">vmax</span><span class="o">=</span><span class="s2">&quot;A_Vmax&quot;</span><span class="p">,</span><span class="n">km_substrate</span><span class="o">=</span><span class="s2">&quot;A_Km&quot;</span><span class="p">),</span>
-    <span class="p">)</span>
+    <span class="n">species</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;m1&#39;</span><span class="p">,</span> <span class="s1">&#39;m2&#39;</span><span class="p">],</span>
+    <span class="n">stoichiometry</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="n">compartments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">],</span>
+    <span class="n">mechanism</span><span class="o">=</span><span class="n">jm</span><span class="o">.</span><span class="n">Jax_MM_Irrev_Uni</span><span class="p">(</span><span class="n">substrate</span><span class="o">=</span><span class="s2">&quot;m1&quot;</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="s2">&quot;A_Vmax&quot;</span><span class="p">,</span> <span class="n">km_substrate</span><span class="o">=</span><span class="s2">&quot;A_Km&quot;</span><span class="p">),</span>
+<span class="p">)</span>
 
-<span class="n">v2</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">Reaction</span><span class="p">(</span>
+<span class="n">v2</span> <span class="o">=</span> <span class="n">jkm</span><span class="o">.</span><span class="n">Reaction</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;v2&quot;</span><span class="p">,</span>
-    <span class="n">species</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;m2&#39;</span><span class="p">,</span><span class="s1">&#39;m3&#39;</span><span class="p">],</span>
-    <span class="n">stoichiometry</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
-    <span class="n">compartments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">,</span><span class="s1">&#39;c&#39;</span><span class="p">],</span>
-    <span class="n">mechanism</span><span class="o">=</span><span class="n">jm</span><span class="o">.</span><span class="n">Jax_MM_Irrev_Uni</span><span class="p">(</span><span class="n">substrate</span><span class="o">=</span><span class="s2">&quot;m2&quot;</span><span class="p">,</span><span class="n">vmax</span><span class="o">=</span><span class="s2">&quot;B_Vmax&quot;</span><span class="p">,</span><span class="n">km_substrate</span><span class="o">=</span><span class="s2">&quot;B_Km&quot;</span><span class="p">),</span>
-    <span class="p">)</span>
+    <span class="n">species</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;m2&#39;</span><span class="p">,</span> <span class="s1">&#39;m3&#39;</span><span class="p">],</span>
+    <span class="n">stoichiometry</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="n">compartments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">],</span>
+    <span class="n">mechanism</span><span class="o">=</span><span class="n">jm</span><span class="o">.</span><span class="n">Jax_MM_Irrev_Uni</span><span class="p">(</span><span class="n">substrate</span><span class="o">=</span><span class="s2">&quot;m2&quot;</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="s2">&quot;B_Vmax&quot;</span><span class="p">,</span> <span class="n">km_substrate</span><span class="o">=</span><span class="s2">&quot;B_Km&quot;</span><span class="p">),</span>
+<span class="p">)</span>
 
-<span class="n">v3</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">Reaction</span><span class="p">(</span>
+<span class="n">v3</span> <span class="o">=</span> <span class="n">jkm</span><span class="o">.</span><span class="n">Reaction</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;v3&quot;</span><span class="p">,</span>
-    <span class="n">species</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;m2&#39;</span><span class="p">,</span><span class="s1">&#39;m4&#39;</span><span class="p">],</span>
-    <span class="n">stoichiometry</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
-    <span class="n">compartments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">,</span><span class="s1">&#39;c&#39;</span><span class="p">],</span>
-    <span class="n">mechanism</span><span class="o">=</span><span class="n">jm</span><span class="o">.</span><span class="n">Jax_MM_Irrev_Uni</span><span class="p">(</span><span class="n">substrate</span><span class="o">=</span><span class="s2">&quot;m2&quot;</span><span class="p">,</span><span class="n">vmax</span><span class="o">=</span><span class="s2">&quot;C_Vmax&quot;</span><span class="p">,</span><span class="n">km_substrate</span><span class="o">=</span><span class="s2">&quot;C_Km&quot;</span><span class="p">),</span>
-    <span class="p">)</span>
+    <span class="n">species</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;m2&#39;</span><span class="p">,</span> <span class="s1">&#39;m4&#39;</span><span class="p">],</span>
+    <span class="n">stoichiometry</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="n">compartments</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">],</span>
+    <span class="n">mechanism</span><span class="o">=</span><span class="n">jm</span><span class="o">.</span><span class="n">Jax_MM_Irrev_Uni</span><span class="p">(</span><span class="n">substrate</span><span class="o">=</span><span class="s2">&quot;m2&quot;</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="s2">&quot;C_Vmax&quot;</span><span class="p">,</span> <span class="n">km_substrate</span><span class="o">=</span><span class="s2">&quot;C_Km&quot;</span><span class="p">),</span>
+<span class="p">)</span>
 
-
-<span class="n">reactions</span><span class="o">=</span><span class="p">[</span><span class="n">v1</span><span class="p">,</span><span class="n">v2</span><span class="p">,</span><span class="n">v3</span><span class="p">]</span>
-<span class="n">compartment_values</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
-
+<span class="n">reactions</span> <span class="o">=</span> <span class="p">[</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">v3</span><span class="p">]</span>
+<span class="n">compartment_values</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
 
 <span class="c1"># initialize the kinetic model object, and then make it a simulation object through jkm.NeuralODE</span>
-<span class="n">kmodel</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">JaxKineticModel_Build</span><span class="p">(</span><span class="n">reactions</span><span class="p">,</span><span class="n">compartment_values</span><span class="p">)</span>
-<span class="n">kmodel_sim</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">NeuralODEBuild</span><span class="p">(</span><span class="n">kmodel</span><span class="p">)</span>
+<span class="n">kmodel</span> <span class="o">=</span> <span class="n">jkm</span><span class="o">.</span><span class="n">JaxKineticModelBuild</span><span class="p">(</span><span class="n">reactions</span><span class="p">,</span> <span class="n">compartment_values</span><span class="p">)</span>
+<span class="n">kmodel_sim</span> <span class="o">=</span> <span class="n">jkm</span><span class="o">.</span><span class="n">NeuralODEBuild</span><span class="p">(</span><span class="n">kmodel</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">stoichiometric_matrix</span><span class="p">)</span>
+
+<span class="c1">#define the time interval, and the initial conditions</span>
 </code></pre></div>
 
 <p>The stoichiometric matrix is automatically constructed from the reactions.</p>
@@ -308,20 +311,20 @@ m4  0.0  0.0  1.0
 </code></pre></div>
 
 <p>One can first jax.jit the model <strong>[2]</strong> and solve the ODEs using the diffrax package <strong>[1]</strong>, which contains many nice numerical solvers.</p>
-<div class="codehilite"><pre><span></span><code><span class="n">ts</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">1000</span><span class="p">)</span>
-<span class="n">y0</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">params</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">,</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mf">1.5</span><span class="p">,</span><span class="mi">1</span><span class="p">])))</span>
+<div class="codehilite"><pre><span></span><code><span class="n">ts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="n">y0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">])))</span>
 
 <span class="c1">#jit the kmodel object. This results in a slow initial solve, but a c-compiled solve</span>
-<span class="n">kmodel_sim</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">kmodel_sim</span><span class="p">)</span>
-<span class="n">ys</span><span class="o">=</span><span class="n">kmodel_sim</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">y0</span><span class="p">,</span><span class="n">params</span><span class="p">)</span>
-<span class="n">ys</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="n">kmodel</span><span class="o">.</span><span class="n">species_names</span><span class="p">)</span>
+<span class="n">kmodel_sim</span> <span class="o">=</span> <span class="n">equinox</span><span class="o">.</span><span class="n">filter_jit</span><span class="p">(</span><span class="n">kmodel_sim</span><span class="p">)</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="n">kmodel_sim</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">kmodel</span><span class="o">.</span><span class="n">species_names</span><span class="p">)</span>
 
-<span class="n">fig</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m1&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;m1&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m2&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;m2&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m3&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;m3&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m4&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;m4&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m1&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;m1&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m2&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;m2&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m3&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;m3&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m4&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;m4&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time (in seconds)&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Concentration (in mM)&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
@@ -336,65 +339,72 @@ m4  0.0  0.0  1.0
 <p>Boundary conditions can be either constant or not constant. Both are implemented as a <code>BoundaryCondition</code> class</p>
 <h4 id="constant-boundary-conditions">Constant boundary conditions</h4>
 <p>Suppose for the system above, we want to make metabolite \(m_1\) a constant boundary condition. We can redefine the species by replacing it with a value</p>
-<div class="codehilite"><pre><span></span><code><span class="n">kmodel</span><span class="o">.</span><span class="n">add_boundary</span><span class="p">(</span><span class="s1">&#39;m1&#39;</span><span class="p">,</span><span class="n">jkm</span><span class="o">.</span><span class="n">BoundaryCondition</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">))</span>
+<div class="codehilite"><pre><span></span><code><span class="n">kmodel</span> <span class="o">=</span> <span class="n">jkm</span><span class="o">.</span><span class="n">JaxKineticModelBuild</span><span class="p">(</span><span class="n">reactions</span><span class="p">,</span> <span class="n">compartment_values</span><span class="p">)</span>
+<span class="n">kmodel</span><span class="o">.</span><span class="n">add_boundary</span><span class="p">(</span><span class="s1">&#39;m1&#39;</span><span class="p">,</span> <span class="n">jkm</span><span class="o">.</span><span class="n">BoundaryCondition</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">stoichiometric_matrix</span><span class="p">)</span>
 
 <span class="c1">#recompile and simulate</span>
-<span class="n">kmodel_sim</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">NeuralODEBuild</span><span class="p">(</span><span class="n">kmodel</span><span class="p">)</span>
-<span class="n">ts</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">kmodel_sim</span> <span class="o">=</span> <span class="n">jkm</span><span class="o">.</span><span class="n">NeuralODEBuild</span><span class="p">(</span><span class="n">kmodel</span><span class="p">)</span>
+<span class="n">ts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
 
 <span class="c1">#we remove m1 from y0, as this is now not evaluated by solving</span>
-<span class="n">y0</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">params</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">,</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mf">1.5</span><span class="p">,</span><span class="mi">1</span><span class="p">])))</span>
+<span class="n">y0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">])))</span>
 
 <span class="c1">#jit the kmodel object. This results in a slow initial solve, but a c-compiled solve</span>
-<span class="n">kmodel_sim</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">kmodel_sim</span><span class="p">)</span>
-<span class="n">ys</span><span class="o">=</span><span class="n">kmodel_sim</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">y0</span><span class="p">,</span><span class="n">params</span><span class="p">)</span>
-<span class="n">ys</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="n">kmodel</span><span class="o">.</span><span class="n">species_names</span><span class="p">)</span>
+<span class="n">kmodel_sim</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">kmodel_sim</span><span class="p">)</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="n">kmodel_sim</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">kmodel</span><span class="o">.</span><span class="n">species_names</span><span class="p">)</span>
 
 <span class="c1">#plot</span>
-<span class="n">fig</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m2&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;m2&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m3&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;m3&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m4&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;m4&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m2&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;m2&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m3&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;m3&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m4&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;m4&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time (in seconds)&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Concentration (in mM)&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </code></pre></div>
 
 <p><img alt="timeseries" src="../images/timeseries_example_boundary.png" /></p>
 <p><span style="font-size: 0.8em;"><b>Figure 2:</b> ODE simulation with \(m1=constant\).</span></p>
 <h4 id="non-constant-boundary-conditions">Non-constant boundary conditions</h4>
 <p>For non-constant boundary conditions, you can use the <code>BoundaryCondition</code> class as before. You can use for example the interpolation abstract classes from <a href="https://docs.kidger.site/diffrax/api/interpolation/">Diffrax</a>. For analytic expression dependent on time t, these can be done as follows:</p>
-<div class="codehilite"><pre><span></span><code><span class="n">kmodel</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">JaxKineticModel_Build</span><span class="p">(</span><span class="n">reactions</span><span class="p">,</span><span class="n">compartment_values</span><span class="p">)</span>
-<span class="n">kmodel</span><span class="o">.</span><span class="n">add_boundary</span><span class="p">(</span><span class="s1">&#39;m1&#39;</span><span class="p">,</span><span class="n">jkm</span><span class="o">.</span><span class="n">BoundaryCondition</span><span class="p">(</span><span class="s1">&#39;0.5+0.3*sin(t)&#39;</span><span class="p">))</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># initialized the kinetic model object, and then make it a simulation object through jkm.NeuralODE</span>
+<span class="n">kmodel</span> <span class="o">=</span> <span class="n">jkm</span><span class="o">.</span><span class="n">JaxKineticModelBuild</span><span class="p">(</span><span class="n">reactions</span><span class="p">,</span> <span class="n">compartment_values</span><span class="p">)</span>
+<span class="n">kmodel</span><span class="o">.</span><span class="n">add_boundary</span><span class="p">(</span><span class="s1">&#39;m1&#39;</span><span class="p">,</span> <span class="n">jkm</span><span class="o">.</span><span class="n">BoundaryCondition</span><span class="p">(</span><span class="s1">&#39;0.5+0.3*sin(t)&#39;</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">stoichiometric_matrix</span><span class="p">)</span>
 
-<span class="n">kmodel_sim</span><span class="o">=</span><span class="n">jkm</span><span class="o">.</span><span class="n">NeuralODEBuild</span><span class="p">(</span><span class="n">kmodel</span><span class="p">)</span>
-<span class="n">ts</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">kmodel_sim</span> <span class="o">=</span> <span class="n">jkm</span><span class="o">.</span><span class="n">NeuralODEBuild</span><span class="p">(</span><span class="n">kmodel</span><span class="p">)</span>
+<span class="n">ts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
 
 <span class="c1">#we remove m1 from y0, as this is now not evaluated by solving</span>
-<span class="n">y0</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">params</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">,</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mf">1.5</span><span class="p">,</span><span class="mi">1</span><span class="p">])))</span>
+<span class="n">y0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">])))</span>
 
 <span class="c1">#jit the kmodel object. This results in a slow initial solve, but a c-compiled solve</span>
-<span class="n">kmodel_sim</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">kmodel_sim</span><span class="p">)</span>
-<span class="n">ys</span><span class="o">=</span><span class="n">kmodel_sim</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">y0</span><span class="p">,</span><span class="n">params</span><span class="p">)</span>
-<span class="n">ys</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="n">kmodel</span><span class="o">.</span><span class="n">species_names</span><span class="p">)</span>
+<span class="n">kmodel_sim</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">kmodel_sim</span><span class="p">)</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="n">kmodel_sim</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+<span class="n">ys</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ys</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">kmodel</span><span class="o">.</span><span class="n">species_names</span><span class="p">)</span>
 
-<span class="n">fig</span><span class="p">,</span><span class="n">ax</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m2&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;m2&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m3&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;m3&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span><span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m4&#39;</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;m4&quot;</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m2&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;m2&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m3&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;m3&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">ys</span><span class="p">[</span><span class="s1">&#39;m4&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;m4&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time (in seconds)&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Concentration (in mM)&quot;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </code></pre></div>
 
 <p><img alt="timeseries" src="../images/timeseries_example_boundary_sin.png" /></p>
 <p><span style="font-size: 0.8em;"><b>Figure 3:</b> ODE simulation with \(m1=0+5+0.3*sin(t)\).</span></p>
+<h2 id="changing-the-numerical-solver">Changing the numerical solver</h2>
+<p>The default solver is <code>diffrax.kvaerno5</code>, but diffrax offers many other numerical solvers that might be more
+efficient for your purposes. Solvers can therefore be changed as follows.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">kmodel_sim</span> <span class="o">=</span> <span class="n">jkm</span><span class="o">.</span><span class="n">NeuralODEBuild</span><span class="p">(</span><span class="n">kmodel</span><span class="p">)</span>
+<span class="n">kmodel_sim</span><span class="o">.</span><span class="n">_change_solver</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="n">diffrax</span><span class="o">.</span><span class="n">Kvaerno3</span><span class="p">(),</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="n">icoeff</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+</code></pre></div>
+
 <h2 id="building-custom-models">Building custom models</h2>
 <p>When building kinetic models, it is not uncommon that \(\frac{dm(t)}{dt}\) is not fully based on the evaluation of \(S\cdot v(t)\). For these cases, one can still use the kinetic mechanisms described above but with a manual setup of the ODEs. We have provided a custom implementation of glycolysis in <a href="../glycolysis/">Custom models</a> as an example.</p>
 <h2 id="saving-models">Saving models</h2>

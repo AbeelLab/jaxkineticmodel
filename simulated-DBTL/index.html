@@ -44,7 +44,7 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../building_models/">Building models</a>
+                <li class="toctree-l1"><a class="reference internal" href="../building_models/">Building and simulating models</a>
                 </li>
               </ul>
               <ul>
@@ -109,8 +109,7 @@
 <p><span style="font-size: 0.8em;"><b>Figure 1:</b> The design-build-test-learn cycle of iterative metabolic engineering, a widely adopted paradigm for strain engineering.</span></p>
 <h2 id="usage">Usage</h2>
 <p>Import required functions</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">jaxkineticmodel.load_sbml.sbml_load</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">jaxkineticmodel.load_sbml.sbml_model</span> <span class="kn">import</span> <span class="n">SBMLModel</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">jaxkineticmodel.load_sbml.sbml_model</span> <span class="kn">import</span> <span class="n">SBMLModel</span><span class="p">,</span> <span class="n">get_global_parameters</span>
 <span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 <span class="kn">from</span> <span class="nn">jaxkineticmodel.utils</span> <span class="kn">import</span> <span class="n">get_logger</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -119,21 +118,22 @@
 
 <p>We first choose a kinetic model that we consider only as a black-box that outputs some target value. From this model scenarios are simulated that might be encountered in real metabolic engineering. At the heart of this implementation is the <code>DesignBuildTestLearnCycle</code>. This requires setting the initial parameters (the reference state), initial conditions, the timespan of process, and the target that we wish to simulate.</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># load model (Messiha et. al (2013))</span>
-<span class="n">filepath</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;../../models/sbml_models/working_models/Messiha2013.xml&quot;</span><span class="p">)</span>
+<span class="n">filepath</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;models/sbml_models/working_models/Messiha2013.xml&quot;</span><span class="p">)</span>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">SBMLModel</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
 <span class="c1"># we retrieve parameters from the model</span>
-<span class="n">global_params</span> <span class="o">=</span> <span class="n">get_global_parameters</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-<span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">model</span><span class="o">.</span><span class="n">local_params</span><span class="p">,</span> <span class="o">**</span><span class="n">global_params</span><span class="p">}</span>
+
 
 <span class="c1"># timespan of model</span>
 <span class="n">ts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">6000</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
 
 <span class="n">dbtl_cycle</span> <span class="o">=</span> <span class="n">DesignBuildTestLearnCycle</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-                                       <span class="n">parameters</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+                                       <span class="n">parameters</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
                                        <span class="n">initial_conditions</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">y0</span><span class="p">,</span>
                                        <span class="n">timespan</span><span class="o">=</span><span class="n">ts</span><span class="p">,</span>
                                        <span class="n">target</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PEP&#39;</span><span class="p">])</span>
+
+<span class="c1"># design phase</span>
 </code></pre></div>
 
 <h4 id="design-phase">Design phase</h4>
@@ -171,6 +171,8 @@
 <span class="n">data</span><span class="o">=</span><span class="n">dbtl_cycle</span><span class="o">.</span><span class="n">test_format_dataset</span><span class="p">(</span><span class="n">strain_designs</span><span class="o">=</span><span class="n">strain_designs</span><span class="p">,</span>
                                <span class="n">production_values</span><span class="o">=</span><span class="n">noised_values</span><span class="p">,</span>
                                <span class="n">reference_parameters</span><span class="o">=</span><span class="n">dbtl_cycle</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
+
+<span class="c1"># learn phase</span>
 </code></pre></div>
 
 <h4 id="learn-phase">Learn phase</h4>
