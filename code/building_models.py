@@ -1,5 +1,5 @@
 
-#import
+from jaxkineticmodel.load_sbml.export_sbml import SBMLExporter
 import diffrax
 from jaxkineticmodel.kinetic_mechanisms import JaxKineticMechanisms as jm
 from jaxkineticmodel.building_models import JaxKineticModelBuild as jkm
@@ -128,3 +128,12 @@ plt.show()
 
 kmodel_sim = jkm.NeuralODEBuild(kmodel)
 kmodel_sim._change_solver(solver=diffrax.Kvaerno3(), rtol=1e-8, atol=1e-8, icoeff=0.1)
+
+output_dir = "models/manual_implementations/sbml_export/"
+model_name = "example_model"
+
+sbml = SBMLExporter(model=kmodel_sim)
+
+sbml.export(initial_conditions=y0,
+            parameters=params,
+            output_file=f"{output_dir}/{model_name}.xml")

@@ -127,10 +127,10 @@
 <p>While <code>jaxkineticmodel</code> is compatible with SBML, not all .xml files are compatible/possible to simulate. This depends on the 
 SBML model level and version that it was written. We here report a comparison in number of passed models with a comparison
 to libroadrunner using the <a href="https://github.com/sbmlteam/sbml-test-suite/tree/release">sbml-test-suite</a>. 
-Libroadrunner is a high-performance simulation engine for systems biology. We compare the simulations to the gold-standard
+Libroadrunner is a high-performance simulation engine for systems biology<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. We compare the simulations to the gold-standard
 dataset that is provided in the sbml-test-suite. We selected 500 models from the test-suite and filtered out steady state models.</p>
 <p>Discrepancies are models where we compared the output from JaxKineticModel to the ground-truth data and observed
-differnces between the time-series. Overall,
+differences between the time-series. Overall,
 libroadrunner simulates more than jaxkineticmodel due to some event rules not yet being implemented. In the future 
 we hope to address all these edge-cases.</p>
 <table>
@@ -244,8 +244,17 @@ we hope to address all these edge-cases.</p>
 </tbody>
 </table>
 <h2 id="references">References</h2>
-<p>[1] Hass, H., Loos, C., Raimundez-Alvarez, E., Timmer, J., Hasenauer, J., &amp; Kreutz, C. (2019). Benchmark problems for dynamic modeling of intracellular processes. Bioinformatics, 35(17), 3073-3082.</p>
-<p>[2]Somogyi, E. T., Bouteiller, J. M., Glazier, J. A., König, M., Medley, J. K., Swat, M. H., &amp; Sauro, H. M. (2015). libRoadRunner: a high performance SBML simulation and analysis library. Bioinformatics, 31(20), 3315-3321.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>Hass, H., Loos, C., Raimundez-Alvarez, E., Timmer, J., Hasenauer, J., &amp; Kreutz, C. (2019). Benchmark problems for dynamic modeling of intracellular processes. Bioinformatics, 35(17), 3073-3082.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:2">
+<p>Somogyi, E. T., Bouteiller, J. M., Glazier, J. A., König, M., Medley, J. K., Swat, M. H., &amp; Sauro, H. M. (2015). libRoadRunner: a high performance SBML simulation and analysis library. Bioinformatics, 31(20), 3315-3321.&#160;<a class="footnote-backref" href="#fnref:2" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
               
             </div>
           </div><footer>

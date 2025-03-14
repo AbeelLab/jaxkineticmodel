@@ -130,11 +130,11 @@ $$\frac{dm(t)}{dt}=S\cdot v(t,m(t),\theta)$$</p>
 <p>\(S\) is the stoichiometric matrix that describes the mass balances of 
 a metabolic system. The fluxes \(v\) are described by reaction mechanisms, typically of some form like Michaelis-Menten or Hill equations. These mechanisms are parameterized by \(\theta\). By providing the initial values of the metabolic states, the ODEs can be solved using a numerical solver:
 $$m(T)=m(0)+\int_0^T S\cdot v(t,m(t),\theta)dt$$</p>
-<p>We will describe below how you can build your own models that are compatible with Jax/Diffrax <strong>[1]</strong>. </p>
+<p>We will describe below how you can build your own models that are compatible with Jax/Diffrax<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>.</p>
 <h2 id="the-reaction-object">The <code>Reaction</code> object</h2>
 <h5 id="a-reaction-centric-approach">A reaction-centric approach</h5>
 <p>Models can be built in a reaction-centric manner. Initializing a <code>Reaction</code> object requires five inputs: name of the reaction, names of the species involved, stoichiometry of the reaction, compartments of the species involved, and the reaction's mechanism. </p>
-<div class="codehilite"><pre><span></span><code><span class="c1">#import</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">jaxkineticmodel.load_sbml.export_sbml</span> <span class="kn">import</span> <span class="n">SBMLExporter</span>
 <span class="kn">import</span> <span class="nn">diffrax</span>
 <span class="kn">from</span> <span class="nn">jaxkineticmodel.kinetic_mechanisms</span> <span class="kn">import</span> <span class="n">JaxKineticMechanisms</span> <span class="k">as</span> <span class="n">jm</span>
 <span class="kn">from</span> <span class="nn">jaxkineticmodel.building_models</span> <span class="kn">import</span> <span class="n">JaxKineticModelBuild</span> <span class="k">as</span> <span class="n">jkm</span>
@@ -310,7 +310,7 @@ m3  0.0  1.0  0.0
 m4  0.0  0.0  1.0
 </code></pre></div>
 
-<p>One can first jax.jit the model <strong>[2]</strong> and solve the ODEs using the diffrax package <strong>[1]</strong>, which contains many nice numerical solvers.</p>
+<p>One can first jax.jit the model<sup id="fnref:2"><a class="footnote-ref" href="#fn:2">2</a></sup> and solve the ODEs using the diffrax package<sup id="fnref2:1"><a class="footnote-ref" href="#fn:1">1</a></sup>, which contains many nice numerical solvers.</p>
 <div class="codehilite"><pre><span></span><code><span class="n">ts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
 <span class="n">y0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
 <span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">kmodel</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">])))</span>
@@ -408,10 +408,29 @@ efficient for your purposes. Solvers can therefore be changed as follows.</p>
 <h2 id="building-custom-models">Building custom models</h2>
 <p>When building kinetic models, it is not uncommon that \(\frac{dm(t)}{dt}\) is not fully based on the evaluation of \(S\cdot v(t)\). For these cases, one can still use the kinetic mechanisms described above but with a manual setup of the ODEs. We have provided a custom implementation of glycolysis in <a href="../glycolysis/">Custom models</a> as an example.</p>
 <h2 id="saving-models">Saving models</h2>
-<p>Coming up</p>
+<p>One a model is built, it can be exported to sbml.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;models/manual_implementations/sbml_export/&quot;</span>
+<span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;example_model&quot;</span>
+
+<span class="n">sbml</span> <span class="o">=</span> <span class="n">SBMLExporter</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">kmodel_sim</span><span class="p">)</span>
+
+<span class="n">sbml</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">initial_conditions</span><span class="o">=</span><span class="n">y0</span><span class="p">,</span>
+            <span class="n">parameters</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+            <span class="n">output_file</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">.xml&quot;</span><span class="p">)</span>
+</code></pre></div>
+
 <h2 id="references">References</h2>
-<p>[1] Kidger, P. (2022). On neural differential equations. arXiv preprint arXiv:2202.02435.</p>
-<p>[2] Bradbury, J., Frostig, R., Hawkins, P., Johnson, M. J., Leary, C., Maclaurin, D., ... &amp; Zhang, Q. (2018). JAX: composable transformations of Python+ NumPy programs.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>Kidger, P. (2022). On neural differential equations. arXiv preprint arXiv:2202.02435.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:2">
+<p>Bradbury, J., Frostig, R., Hawkins, P., Johnson, M. J., Leary, C., Maclaurin, D., ... &amp; Zhang, Q. (2018). JAX: composable transformations of Python+ NumPy programs.&#160;<a class="footnote-backref" href="#fnref:2" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
               
             </div>
           </div><footer>
