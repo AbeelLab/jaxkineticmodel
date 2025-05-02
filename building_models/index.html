@@ -46,7 +46,7 @@
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href="#">Building and simulating models</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#metabolic-kinetic-modelling">Metabolic kinetic modelling</a>
+    <li class="toctree-l2"><a class="reference internal" href="#metabolic-kinetic-modeling">Metabolic kinetic modeling</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#the-reaction-object">The Reaction object</a>
         <ul>
@@ -127,7 +127,7 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="building-models">Building models</h1>
-<h2 id="metabolic-kinetic-modelling">Metabolic kinetic modelling</h2>
+<h2 id="metabolic-kinetic-modeling">Metabolic kinetic modeling</h2>
 <p>The time evolution of metabolic states are often described by a set of 
 Ordinary Differential Equations (ODEs):
 $$\frac{dm(t)}{dt}=S\cdot v(t,m(t),\theta)$$</p>
@@ -289,6 +289,7 @@ equation in sympy.</p>
 <span class="c1"># A*v_max/(km_A*(A/km_A + 1))</span>
 <span class="n">v1</span><span class="o">.</span><span class="n">add_modifier</span><span class="p">(</span><span class="n">modifier</span><span class="o">.</span><span class="n">SimpleActivator</span><span class="p">(</span><span class="n">activator</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="n">k_A</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">v1</span><span class="o">.</span><span class="n">symbolic</span><span class="p">())</span>
+<span class="c1"># A*v_max*(C/k + 1)/(km_A*(A/km_A + 1))</span>
 </code></pre></div>
 
 <p>Several <code>modifier</code> classes are implemented that modify the kinetic equation, and custom modifiers are easily implemented.</p>
@@ -341,10 +342,11 @@ Users can implement custom mechanisms using the <code>Mechanism</code> base clas
 
         <span class="k">return</span> <span class="p">(</span><span class="n">substrate</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">5</span> <span class="o">**</span> <span class="n">parameter1</span><span class="p">)</span> <span class="o">/</span> <span class="n">parameter2</span>
 
-
 <span class="n">v_new</span> <span class="o">=</span> <span class="n">JaxNewMechanism</span><span class="p">(</span><span class="n">substrate</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span>
                          <span class="n">parameter1</span><span class="o">=</span><span class="s2">&quot;vmax&quot;</span><span class="p">,</span>
                          <span class="n">parameter2</span><span class="o">=</span><span class="s2">&quot;abc_parameter&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">v_new</span><span class="o">.</span><span class="n">symbolic</span><span class="p">())</span>
+<span class="c1"># (5**vmax + 5.0*A)/abc_parameter</span>
 </code></pre></div>
 
 <h2 id="building-simple-models">Building simple models</h2>
