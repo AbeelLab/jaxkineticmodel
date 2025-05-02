@@ -54,6 +54,10 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#table-of-implemented-mechanisms">Table of implemented mechanisms</a>
     </li>
+    <li class="toctree-l3"><a class="reference internal" href="#modifying-reaction-mechanisms-for-regulation">Modifying reaction mechanisms for regulation</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#implementing-custom-reaction-mechanisms">Implementing custom reaction mechanisms</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#building-simple-models">Building simple models</a>
@@ -153,7 +157,11 @@ $$m(T)=m(0)+\int_0^T S\cdot v(t,m(t),\theta)dt$$</p>
 <span class="p">)</span>
 </code></pre></div>
 
-<p>The <code>mechanism</code> is another class that describes the flux function, which depends on metabolite states and parameters. Parameters are pointed towards with unique symbols. The reaction object is implemented in a way that own-implemented flux functions can be used. We have also implemented a set of general flux functions that are often used in systems biology. </p>
+<p>The <code>mechanism</code> is another class that describes the flux function, which depends on metabolite states and parameters. 
+Parameters are pointed towards with unique symbols. The reaction object is implemented in a way that own-implemented 
+flux functions can be used. 
+We have also implemented a set of general flux functions that are often used in systems biology. Users can also 
+implement their <a href="#implementing-custom-reaction-mechanisms">own mechanisms</a> using the abstract <code>Mechanism</code> class.</p>
 <h5 id="table-of-implemented-mechanisms">Table of implemented mechanisms</h5>
 <table>
 <thead>
@@ -261,6 +269,84 @@ $$m(T)=m(0)+\int_0^T S\cdot v(t,m(t),\theta)dt$$</p>
 </tr>
 </tbody>
 </table>
+<h4 id="modifying-reaction-mechanisms-for-regulation">Modifying reaction mechanisms for regulation</h4>
+<p>Reaction mechanisms might have regulatory interactions, or may need to be scaled by state variables (e.g., when using
+q-rates in bioprocesses). While some mechanisms already include activation/inhibition in the table above, 
+for modeling purposes it can be nice to add modifiers later using <code>add_modifier</code>. This modifies the symbolic
+equation in sympy.</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">jaxkineticmodel.kinetic_mechanisms</span> <span class="kn">import</span> <span class="n">JaxKineticMechanisms</span> <span class="k">as</span> <span class="n">jm</span>
+<span class="kn">from</span> <span class="nn">jaxkineticmodel.kinetic_mechanisms</span> <span class="kn">import</span> <span class="n">JaxKineticModifiers</span> <span class="k">as</span> <span class="n">modifier</span>
+<span class="kn">from</span> <span class="nn">jaxkineticmodel.kinetic_mechanisms.JaxKineticMechanisms</span> <span class="kn">import</span> <span class="n">Mechanism</span>
+
+
+<span class="c1"># look into how to deal with arbitrary arguments in compute()</span>
+<span class="n">v1</span> <span class="o">=</span> <span class="n">jm</span><span class="o">.</span><span class="n">Jax_MM_Irrev_Uni</span><span class="p">(</span>
+    <span class="n">substrate</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span>
+    <span class="n">vmax</span><span class="o">=</span><span class="s2">&quot;v_max&quot;</span><span class="p">,</span>
+    <span class="n">km_substrate</span><span class="o">=</span><span class="s2">&quot;km_A&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">v1</span><span class="o">.</span><span class="n">symbolic</span><span class="p">())</span>
+<span class="c1"># A*v_max/(km_A*(A/km_A + 1))</span>
+<span class="n">v1</span><span class="o">.</span><span class="n">add_modifier</span><span class="p">(</span><span class="n">modifier</span><span class="o">.</span><span class="n">SimpleActivator</span><span class="p">(</span><span class="n">activator</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="n">k_A</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">v1</span><span class="o">.</span><span class="n">symbolic</span><span class="p">())</span>
+</code></pre></div>
+
+<p>Several <code>modifier</code> classes are implemented that modify the kinetic equation, and custom modifiers are easily implemented.</p>
+<table>
+<thead>
+<tr>
+<th><strong>Modifier name</strong></th>
+<th><strong>Type</strong></th>
+<th><strong>Modification formula</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SimpleActivator</td>
+<td>Activation by state variable or parameter</td>
+<td>$$1 +\frac{activator}{k_A}$$</td>
+</tr>
+<tr>
+<td>SimpleInhibitor</td>
+<td>Inhibition by state variable or parameter</td>
+<td>$$1/(1 +\frac{inhibitor}{k_I})$$</td>
+</tr>
+<tr>
+<td>BasicDivision</td>
+<td>Division of reaction</td>
+<td>$$\frac{1}{(S * scaling})$$</td>
+</tr>
+<tr>
+<td>BasicMultiplication</td>
+<td>Multiplication of reaction</td>
+<td>$$ S * scaling$$</td>
+</tr>
+</tbody>
+</table>
+<p>NOTE: When using modifiers, that species that are included in the modifier 
+mechanisms are passed to the stoichiometry (0 when they do not change the 
+mass balance) and species argument of the <code>Reaction</code>. Otherwise, when simulating the kinetic model built 
+using <code>NeuralODEBuild</code> will not recognize these when evaluating the equations.</p>
+<h4 id="implementing-custom-reaction-mechanisms">Implementing custom reaction mechanisms</h4>
+<p>It may be the case that the table of mechanisms + modifiers is not sufficiently expressive for the modeling task.
+Users can implement custom mechanisms using the <code>Mechanism</code> base class.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">JaxNewMechanism</span><span class="p">(</span><span class="n">Mechanism</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Example of a custom reaction implementation&quot;&quot;&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="n">substrate</span><span class="p">,</span> <span class="n">parameter1</span><span class="p">,</span> <span class="n">parameter2</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Here you can add whatever</span>
+<span class="sd">        mechanistic description you like.</span>
+<span class="sd">        This is of course a non-sense reaction&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">substrate</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">5</span> <span class="o">**</span> <span class="n">parameter1</span><span class="p">)</span> <span class="o">/</span> <span class="n">parameter2</span>
+
+
+<span class="n">v_new</span> <span class="o">=</span> <span class="n">JaxNewMechanism</span><span class="p">(</span><span class="n">substrate</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span>
+                         <span class="n">parameter1</span><span class="o">=</span><span class="s2">&quot;vmax&quot;</span><span class="p">,</span>
+                         <span class="n">parameter2</span><span class="o">=</span><span class="s2">&quot;abc_parameter&quot;</span><span class="p">)</span>
+</code></pre></div>
+
 <h2 id="building-simple-models">Building simple models</h2>
 <h4 id="a-simple-metabolic-network-example">A simple metabolic network example</h4>
 <p>Here, we show an example of how to build kinetic models using the reaction objects described above. We model the following network:</p>
