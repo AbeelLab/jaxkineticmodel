@@ -1,4 +1,4 @@
-from jaxkineticmodel.parameter_estimation.training import Trainer
+from jaxkineticmodel.parameter_estimation.training import Trainer, TrainingData
 from jaxkineticmodel.load_sbml.sbml_model import SBMLModel
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,15 +6,23 @@ import pandas as pd
 import jax.numpy as jnp
 import jax
 import optax
+
 # load model
 model_name = "Smallbone2013_SerineBiosynthesis"
 filepath = "models/sbml_models/working_models/" + model_name + ".xml"
 model = SBMLModel(filepath)
-kinetic_model=model.get_kinetic_model()
+kinetic_model = model.get_kinetic_model()
 
 # load data
-dataset = pd.read_csv("datasets/Smallbone2013 - Serine biosynthesis/Smallbone2013 - Serine biosynthesis_dataset.csv",
-                      index_col=0)
+data = pd.read_csv("datasets/Smallbone2013 - "
+                   "Serine biosynthesis/Smallbone2013 - Serine biosynthesis_dataset.csv",
+                   index_col=0)
+dataset = np.array(data).reshape(1, data.shape[0], data.shape[1])  # n_samples, n_timepoints, n_speceis
+dataset = TrainingData(ts=list(data.index),
+                       dataset=dataset,
+                       species=[list(data.columns)], model=model)
+
+
 #initialize the trainer object. The required inputs are model and data. We will do 300 iterations of gradient descent
 trainer = Trainer(model=kinetic_model, data=dataset, n_iter=300)
 
@@ -45,7 +53,6 @@ optimized_parameters2, loss_per_iteration2 = trainer.train()
 fig, ax = plt.subplots(figsize=(3, 3))
 for i in range(5):
     plt.plot(np.concatenate((np.array(loss_per_iteration[i]), loss_per_iteration2[i])))
-
 ax.set_xlabel("Iterations")
 ax.set_ylabel("Log Loss")
 ax.set_yscale("log")
@@ -56,7 +63,8 @@ plt.show()
 trainer = Trainer(model=kinetic_model, data=dataset, n_iter=300, optim_space="linear")
 
 # optimizer change with optax optimizers
-trainer = Trainer(model=kinetic_model, data=dataset, n_iter=300, optimizer=optax.adam(lr=1e-3))
+trainer = Trainer(model=kinetic_model, data=dataset, n_iter=300, optimizer=optax.adam(learning_rate=0.003))
+
 
 # own loss function
 def log_mean_centered_loss_func2(params, ts, ys, model, to_include):
