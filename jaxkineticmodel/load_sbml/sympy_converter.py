@@ -57,12 +57,13 @@ MAPPINGS = [
     Mapping(sympy.Ge, libsbml.AST_RELATIONAL_GEQ, 2),
     Mapping(sympy.Eq, libsbml.AST_RELATIONAL_EQ, 2),
 
-
     Mapping(sympy.And,libsbml.AST_LOGICAL_AND, None),
     Mapping(sympy.Or,libsbml.AST_LOGICAL_OR, None),
     Mapping(sympy.Xor,libsbml.AST_LOGICAL_XOR, None),
 
     Mapping(sympy.Ne, libsbml.AST_RELATIONAL_NEQ, 2),
+
+    Mapping(sympy.Abs, libsbml.AST_FUNCTION_ABS, 1),
     Mapping(sympy.sin, libsbml.AST_FUNCTION_SIN, 1),
     Mapping(sympy.cos, libsbml.AST_FUNCTION_COS, 1), #new
     Mapping(sympy.ln, libsbml.AST_FUNCTION_LN,1), #new
